@@ -46,9 +46,10 @@ function cleanWords(input: string) {
 
 function makeRounds(words: string[], practice: string[]) {
   const pool = [...new Set([...practice.filter((word) => words.includes(word)), ...shuffle(words)])];
-  const targets = Array.from({ length: ROUND_COUNT }, (_, index) => pool[index % pool.length]);
+  const activeWords = pool.slice(0, Math.min(8, pool.length));
+  const targets = Array.from({ length: ROUND_COUNT }, (_, index) => activeWords[index % activeWords.length]);
   return targets.map((target) => {
-    const distractors = shuffle(words.filter((word) => word !== target)).slice(0, 2);
+    const distractors = shuffle(activeWords.filter((word) => word !== target)).slice(0, 2);
     return { target, choices: shuffle([target, ...distractors]) };
   });
 }
@@ -69,6 +70,7 @@ export default function Home() {
   const [customOpen, setCustomOpen] = useState(false);
   const [customText, setCustomText] = useState("");
   const [customWords, setCustomWords] = useState<string[]>([]);
+  const [customError, setCustomError] = useState("");
   const [rounds, setRounds] = useState<{ target: string; choices: string[] }[]>([]);
   const [roundIndex, setRoundIndex] = useState(0);
   const [correct, setCorrect] = useState(0);
@@ -95,8 +97,8 @@ export default function Home() {
     };
   }, []);
 
-  const speak = useCallback((word: string) => {
-    if (!soundOn || !("speechSynthesis" in window)) return;
+  const speak = useCallback((word: string, force = false) => {
+    if ((!soundOn && !force) || !("speechSynthesis" in window)) return;
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(word);
     utterance.rate = 0.72;
@@ -120,7 +122,7 @@ export default function Home() {
     setWrongChoice(null);
     setMessage("Listen, then find the word!");
     setStage("playing");
-    setTimeout(() => speak(nextRounds[0].target), 160);
+    speak(nextRounds[0].target);
   };
 
   const chooseWord = (word: string) => {
@@ -128,7 +130,7 @@ export default function Home() {
     if (word !== current.target) {
       setWrongChoice(word);
       setMissed((items) => items.includes(current.target) ? items : [...items, current.target]);
-      setMessage("Good try! Listen once more.");
+      setMessage(`Good try! The word is “${current.target}.” Find it below.`);
       speak(current.target);
       return;
     }
@@ -158,15 +160,16 @@ export default function Home() {
     setSoundOn(next);
     try { localStorage.setItem("sight-word-spark-sound", next ? "on" : "off"); } catch {}
     if (!next && "speechSynthesis" in window) window.speechSynthesis.cancel();
-    if (next && current) setTimeout(() => speak(current.target), 30);
+    if (next && current) speak(current.target, true);
   };
 
   const saveCustom = () => {
     const cleaned = cleanWords(customText);
     if (cleaned.length < 3) {
-      setMessage("Add at least 3 different words.");
+      setCustomError("Add at least 3 different words so the game can make choices.");
       return;
     }
+    setCustomError("");
     setCustomWords(cleaned);
     setCustomOpen(false);
   };
@@ -190,14 +193,14 @@ export default function Home() {
           <div className="hero-copy">
             <div className="eyebrow"><span>★</span> A tiny game for mighty readers</div>
             <h1 id="welcome-title">Hear it.<br />Find it. <em>Spark it!</em></h1>
-            <p>Listen for the word, tap the match, and light up a trail of stars. Ten words. Endless proud faces.</p>
+            <p>Listen for the word, tap the match, and light up a trail of stars. Ten sparks. Endless proud faces.</p>
           </div>
 
           <div className="setup-card">
             <div className="card-number">1</div>
             <div className="setup-content">
               <h2>Choose your word trail</h2>
-              <p>Pick a level or add this week&apos;s school words.</p>
+              <p>Pick a level or add this week&apos;s school words. Each trail focuses on 8 at a time.</p>
               <div className="level-grid">
                 {(Object.keys(LEVELS) as LevelKey[]).map((key) => (
                   <button
@@ -219,11 +222,12 @@ export default function Home() {
               {customOpen && (
                 <div className="custom-panel">
                   <label htmlFor="custom-words">Paste words separated by commas or new lines</label>
-                  <textarea id="custom-words" value={customText} maxLength={500} onChange={(event) => setCustomText(event.target.value)} placeholder="because, friend, beautiful, together" />
+                  <textarea id="custom-words" value={customText} maxLength={500} onChange={(event) => { setCustomText(event.target.value); setCustomError(""); }} placeholder="because, friend, beautiful, together" />
                   <div className="custom-actions">
                     <span>{cleanWords(customText).length}/40 words</span>
                     <button onClick={saveCustom}>Use these words</button>
                   </div>
+                  {customError && <p className="custom-error" role="alert">{customError}</p>}
                 </div>
               )}
             </div>
@@ -242,7 +246,7 @@ export default function Home() {
       )}
 
       {stage === "playing" && current && (
-        <section className="play-area" aria-live="polite">
+        <section className="play-area">
           <div className="round-meta">
             <button className="back-button" onClick={() => setStage("welcome")}>‹ Change words</button>
             <span>Word {roundIndex + 1} of {ROUND_COUNT}</span>
@@ -250,7 +254,7 @@ export default function Home() {
           <div className="progress-track" aria-label={`${Math.round(progress)} percent complete`}><span style={{ width: `${progress}%` }} /></div>
           <div className="listen-card">
             <SparkMark />
-            <p>{message}</p>
+            <p role="status" aria-live="polite">{message}</p>
             <button className="listen-button" onClick={() => speak(current.target)} disabled={!soundOn || !speechReady}>
               <span aria-hidden="true">◖))</span> Hear the word
             </button>
