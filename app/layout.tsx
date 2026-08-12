@@ -6,8 +6,7 @@ const nunito = Nunito({ subsets: ["latin"], variable: "--font-nunito" });
 
 export const metadata: Metadata = {
   title: "Sight Word Spark",
-  description: "A joyful listen-and-find game for growing readers.",
-  other: { "codex-preview": "development" },
+  description: "A joyful listen-and-find game where growing readers hatch a collection of cosmic creatures.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

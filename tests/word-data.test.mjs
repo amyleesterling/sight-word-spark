@@ -1,0 +1,29 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import test from "node:test";
+
+const page = await readFile(new URL("../app/page.tsx", import.meta.url), "utf8");
+const worker = await readFile(new URL("../worker/index.ts", import.meta.url), "utf8");
+
+test("all 179 included Dolch words are covered by the speech endpoint", () => {
+  const levelLists = [...page.matchAll(/words:\s*(\[[^\r\n]+?\])\s*}/g)].map((match) => JSON.parse(match[1]));
+  const words = levelLists.flat().map((word) => word.toLowerCase());
+  assert.equal(words.length, 179);
+  assert.equal(new Set(words).size, 179);
+  const serverList = worker.match(/const DOLCH_WORDS = new Set\(`([^`]+)`\.split/)?.[1]?.split(" ") || [];
+  assert.deepEqual(new Set(serverList), new Set(words));
+});
+
+test("ambiguous words have matching explicit pronunciation metadata", () => {
+  for (const word of ["live", "read"]) {
+    const pageValue = page.match(new RegExp(`${word}: \\\"([^\\\"]+)\\\"`))?.[1];
+    const workerValue = worker.match(new RegExp(`${word}: \\\"([^\\\"]+)\\\"`))?.[1];
+    assert.ok(pageValue, `${word} needs client pronunciation metadata`);
+    assert.equal(workerValue, pageValue, `${word} metadata must agree on client and server`);
+  }
+});
+
+test("no browser-generated voice fallback remains", () => {
+  assert.doesNotMatch(page, /speechSynthesis|SpeechSynthesisUtterance/);
+  assert.match(page, /Voice is AI-generated/);
+});
