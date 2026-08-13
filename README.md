@@ -1,57 +1,123 @@
-# Sight Word Spark
+# ⚡ Sight Word Spark
 
-[Play Sight Word Spark](https://sight-word-spark.amysterling.chatgpt.site)
+A sight-word reading game for kids around first grade. Hear a word, find it
+among lookalikes, crack a mystery egg — and hatch a named creature that joins
+a permanent collection.
 
-Sight Word Spark is a short listen-and-find game for growing readers. A child sees the prize before starting, finds six spoken words in about 2–3 minutes, and hatches a named cosmic creature that stays in a device-local collection.
+**Play this version (phone-friendly):** https://amyleesterling.github.io/sight-word-spark/
+**Original Site (Sol's version):** https://sight-word-spark.amysterling.chatgpt.site
+
+## Why kids come back
+
+Every trail starts by showing the prize: *"Find 6 words to crack this egg and
+meet them."* Each correct answer visibly cracks the egg; the trail takes about
+2–3 minutes and always ends in a hatch. The reveal is a named collectible
+(Emberly the Spark Fox, Doodle the Ink Octo, …) saved permanently on the
+device. The gallery shows discovered friends in color, mysteries as
+silhouettes, and progress like **4 of 12**. No duplicates are awarded until
+the whole first set is found; completing it unlocks a second set. There are
+no streaks to lose, no timers, no scarcity tricks, and nothing to buy.
 
 ## Features
 
-- Complete Dolch Pre-K, Kindergarten, 1st-grade, and 2nd-grade lists
-- Safe custom word lists with client and server validation
-- Five-word session focus with missed words returning later without penalties
-- Twelve-creature collection with silhouettes and no duplicates until the initial set is complete
-- Versioned `localStorage` for collections and words to revisit
-- Server-side OpenAI Speech API using the pinned `gpt-4o-mini-tts-2025-12-15` snapshot and `marin`
-- Explicit pronunciation metadata for ambiguous words such as `read` and `live`
-- Aggressive edge/browser caching for standard Dolch recordings and next-word preloading
-- Temporary, clearly disclosed device-voice fallback when GPT audio is unavailable
-- Touch, keyboard, responsive-layout, and reduced-motion support
+- **200 Fry instant words** in 8 levels of 25. The first hundred (levels 1–4)
+  is open from the start; levels 5–8 unlock one at a time by hatching an egg
+  in the previous level.
+- **24 collectible creatures** in two sets, drawn as code (SVG) so the whole
+  collection has one coherent style.
+- **AI reading-teacher voice** via the server-side OpenAI Speech API
+  (`gpt-4o-mini-tts`, voice `marin`) — warm, lively, and clear, not
+  a robotic browser voice and not exaggerated preschool speech. A small
+  disclosure notes the voice is AI-generated. If audio fails, the game shows
+  a calm retry state; it never falls back to `speechSynthesis`.
+- **Gentle correction**: a wrong tap costs nothing. The word is replayed, the
+  wrong card fades, after a second miss the right card glows, and the word
+  quietly returns later in the trail for one friendly retry. Missed words are
+  remembered (locally) and favored in future trails.
+- **Homograph-safe audio**: ambiguous words carry pronunciation metadata —
+  "read" is spoken *reed* (present tense), "live" as *liv* (verb) — so the
+  audio, the displayed word, and scoring always agree.
+- **Custom words**: add up to 20 of your own (spelling lists, names). Words
+  are validated on the client and again on the server, and audio requests are
+  rate-limited.
+- **Versioned local saves**: the collection, unlocked levels, and practice
+  memory live in `localStorage` under an explicit schema version with
+  defensive migration — refreshing, reopening, or updating the game never
+  wipes a collection.
+- Touch-first with large targets, full keyboard play (1–4 to answer, R to
+  replay), responsive layout, and `prefers-reduced-motion` support.
 
-## Local setup
+## Tech stack
 
-Requirements: Node.js 22.13 or newer, npm, and a Bash-compatible shell for the bundled Sites scripts.
+- [Vite](https://vitejs.dev) + React 18 + TypeScript + Tailwind CSS
+- Static output (`dist/`) plus one serverless endpoint:
+  `functions/api/tts.ts`, a Cloudflare Pages Function that proxies the
+  OpenAI Speech API
+- [Vitest](https://vitest.dev) for tests
 
-```bash
-npm ci
-cp .env.example .env.local
-npm run dev
-```
-
-Set `OPENAI_API_KEY` in `.env.local` before testing speech. Never commit `.env.local` or an API key.
-
-On Windows, the underlying build can also be run directly when Bash is unavailable:
-
-```powershell
-npx vite build
-```
-
-## OpenAI voice configuration
-
-The key is read only by the Cloudflare-compatible worker in `worker/index.ts`; it is never included in client JavaScript. Configure this secret as `OPENAI_API_KEY` in the Site's hosted environment before testing the live voice.
-
-The endpoint accepts one validated word, checks any pronunciation hint against server-owned metadata, applies per-client rate limiting, and caches only the standard Dolch recordings. Custom recordings are returned with `private, no-store`.
-
-See the official [OpenAI text-to-speech guide](https://developers.openai.com/api/docs/guides/text-to-speech).
-
-## Checks
+## Getting started
 
 ```bash
-npm run lint
-npm test
+npm install
+OPENAI_API_KEY=sk-... npm run dev    # audio works locally through a dev middleware
+npm test                             # logic tests (storage, collection, trails, TTS validation)
+npm run build                        # type-check + production build to dist/
 ```
 
-The test suite verifies the production worker, missing-key behavior, all 179 included Dolch words, ambiguous pronunciation metadata, and the disclosed temporary device-voice fallback.
+Without `OPENAI_API_KEY` the game runs fine but the speaker button shows its
+calm retry state instead of audio.
 
-## Deployment
+## Playing on a phone
 
-This is a Vinext/Vite/React app that produces Cloudflare-compatible output for OpenAI Sites. `.openai/hosting.json` identifies the existing Sight Word Spark Site so deployments update the live URL rather than create a second project.
+The game is phone-first: it installs to the home screen as a full-screen app
+(Share → Add to Home Screen on iOS), respects notches and reduced motion,
+uses big touch targets, and fits an iPhone SE screen without scrolling.
+
+## Configuring the API key (required for voice)
+
+The OpenAI key is **server-side only**. It is read from the `OPENAI_API_KEY`
+environment variable by the `/api/tts` endpoint and never appears in client
+code, the bundle, or this repository.
+
+**On the GitHub Pages deployment** (static, no server): open
+*Grown-ups: voice settings* at the bottom of the home screen and paste an
+OpenAI API key once. The key is stored only in that device's localStorage and
+sent only to `api.openai.com`; every word is cached on-device after its first
+play. Remove it from the same screen any time.
+
+- **Cloudflare Pages**: set `OPENAI_API_KEY` in *Settings → Environment
+  variables* (production and preview). `functions/api/tts.ts` is picked up
+  automatically; the build output directory is `dist`.
+- **Other hosts / the existing Site**: provide `OPENAI_API_KEY` in the site's
+  server environment and expose the equivalent of `functions/api/tts.ts`
+  (a ~100-line handler; see `server/dev-tts-plugin.ts` for a plain Node
+  version).
+- Optional overrides: `TTS_MODEL` (default `gpt-4o-mini-tts`) and `TTS_VOICE`
+  (default `marin`; `cedar` is the other recommended voice).
+
+Generated audio is cached aggressively (edge cache on the server, Cache
+Storage + in-memory on the device), and upcoming words are preloaded, so the
+API is hit roughly once per word per cache version.
+
+## Pronunciation testing
+
+```bash
+OPENAI_API_KEY=sk-... npm run test:pronunciations
+```
+
+generates an mp3 for every shipped word into `pronunciation-audio/` (ignored
+by git) for a listen-through. The vitest suite separately verifies that every
+shipped word passes TTS validation and that known homographs carry explicit
+pronunciation metadata.
+
+## Project layout
+
+```
+shared/        word lists + TTS contract (used by client, server, and tests)
+functions/     Cloudflare Pages Function: POST /api/tts
+server/        Vite dev middleware mirroring the production endpoint
+src/game/      storage (versioned saves), collection, trail, audio manager
+src/screens/   home, pre-trail promise, play, hatch, gallery, custom words
+src/components/ egg + creature SVG art, shared UI
+scripts/       pronunciation smoke test
+```

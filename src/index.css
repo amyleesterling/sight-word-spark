@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  @apply bg-night-900 text-white font-round antialiased;
+  background-image:
+    radial-gradient(circle at 20% 15%, rgba(143, 138, 255, 0.18), transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(255, 190, 46, 0.10), transparent 45%),
+    radial-gradient(circle at 75% 20%, rgba(99, 197, 255, 0.12), transparent 35%);
+  background-attachment: fixed;
+  -webkit-tap-highlight-color: transparent;
+  /* respect notches and home indicators on phones */
+  padding-top: env(safe-area-inset-top);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  /* keep rapid game taps from double-tap zooming or selecting text */
+  touch-action: manipulation;
+}
+
+button {
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* iOS rubber-band overscroll looks broken behind a fixed gradient */
+html {
+  overscroll-behavior-y: none;
+}
+
+/* Big friendly focus rings for keyboard players */
+:focus-visible {
+  outline: 3px solid #ffd15c;
+  outline-offset: 3px;
+  border-radius: 0.75rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
