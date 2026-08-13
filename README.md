@@ -7,7 +7,8 @@ Sight Word Spark is a short listen-and-find game for growing readers. A child se
 ## Features
 
 - Complete Dolch Pre-K, Kindergarten, 1st-grade, and 2nd-grade lists
-- Safe custom word lists with client and server validation
+- The complete supplied 200-word Fry list in one selectable trail
+- Safe custom word lists up to 200 words with client and server validation
 - Five-word session focus with missed words returning later without penalties
 - Twelve-creature collection with silhouettes and no duplicates until the initial set is complete
 - Versioned `localStorage` for collections and words to revisit
@@ -50,7 +51,7 @@ npm run lint
 npm test
 ```
 
-The test suite verifies the production worker, missing-key behavior, all 179 included Dolch words, ambiguous pronunciation metadata, and the disclosed temporary device-voice fallback.
+The test suite verifies the production worker, missing-key behavior, all 179 included Dolch words, all 200 supplied Fry words, ambiguous pronunciation metadata, and the disclosed temporary device-voice fallback.
 
 ## Deployment
 

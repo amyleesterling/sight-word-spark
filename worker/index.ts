@@ -24,9 +24,16 @@ interface ExecutionContext {
 }
 
 const DOLCH_WORDS = new Set(`a and away big blue can come down find for funny go help here i in is it jump little look make me my not one play red run said see the three to two up we where yellow you all am are at ate be black brown but came did do eat four get good have he into like must new no now on our out please pretty ran ride saw say she so soon that there they this too under want was well went what white who will with yes after again an any as ask by could every fly from give going had has her him his how just know let live may of old once open over put round some stop take thank them then think walk were when always around because been before best both buy call cold does don't fast first five found gave goes green its made many off or pull read right sing sit sleep tell their these those upon us use very wash which why wish work would write your`.split(" "));
+const FRY_200_WORDS = `the of and a to in is you that it he was for on are as with his they i at be this have from or one had by words but not what all were we when your can said there use an each which she do how their if will up other about out many then them these so some her would make like him into time has look two more write go see number no way could people my than first water been called who oil sit now find long down day did get come made may part over new sound take only little work know place years live me back give most very after things our just name good sentence man think say great where help through much before line right too means old any same tell boy follow came want show also around form three small set put end does another well large must big even such because turn here why ask went men read need land different home us move try kind hand picture again change off play spell air away animal house point page letter mother answer found study still learn should america world`.split(" ");
+const STANDARD_WORDS = new Set([...DOLCH_WORDS, ...FRY_200_WORDS]);
 const SPOKEN_OVERRIDES: Record<string, string> = {
+  a: "a, as in: a cat",
+  i: "I",
+  does: "does, as in: she does it",
   live: "live, as in: I live on this planet",
   read: "read, present tense, as in: I read a book",
+  use: "use, as in: I use a pencil",
+  america: "America",
 };
 const requestsByClient = new Map<string, { count: number; resetAt: number }>();
 
@@ -62,7 +69,7 @@ async function handleSpeech(request: Request, env: Env, ctx: ExecutionContext) {
   }
   const expectedSpoken = SPOKEN_OVERRIDES[word] || word;
   if (spoken !== expectedSpoken) return errorResponse("That pronunciation is not allowed.", 400);
-  const isStandard = DOLCH_WORDS.has(word);
+  const isStandard = STANDARD_WORDS.has(word);
   const retryAfter = checkRateLimit(request, isStandard);
   if (retryAfter) return errorResponse("The reading voice is resting for a moment.", 429, retryAfter);
   if (!env.OPENAI_API_KEY) return errorResponse("The reading voice is not configured yet.", 503);
