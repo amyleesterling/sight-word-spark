@@ -4,7 +4,8 @@ A sight-word reading game for kids around first grade. Hear a word, find it
 among lookalikes, crack a mystery egg — and hatch a named creature that joins
 a permanent collection.
 
-**Play it live:** https://sight-word-spark.amysterling.chatgpt.site
+**Play this version (phone-friendly):** https://amyleesterling.github.io/sight-word-spark/
+**Original Site (Sol's version):** https://sight-word-spark.amysterling.chatgpt.site
 
 ## Why kids come back
 
@@ -66,11 +67,23 @@ npm run build                        # type-check + production build to dist/
 Without `OPENAI_API_KEY` the game runs fine but the speaker button shows its
 calm retry state instead of audio.
 
+## Playing on a phone
+
+The game is phone-first: it installs to the home screen as a full-screen app
+(Share → Add to Home Screen on iOS), respects notches and reduced motion,
+uses big touch targets, and fits an iPhone SE screen without scrolling.
+
 ## Configuring the API key (required for voice)
 
 The OpenAI key is **server-side only**. It is read from the `OPENAI_API_KEY`
 environment variable by the `/api/tts` endpoint and never appears in client
 code, the bundle, or this repository.
+
+**On the GitHub Pages deployment** (static, no server): open
+*Grown-ups: voice settings* at the bottom of the home screen and paste an
+OpenAI API key once. The key is stored only in that device's localStorage and
+sent only to `api.openai.com`; every word is cached on-device after its first
+play. Remove it from the same screen any time.
 
 - **Cloudflare Pages**: set `OPENAI_API_KEY` in *Settings → Environment
   variables* (production and preview). `functions/api/tts.ts` is picked up
