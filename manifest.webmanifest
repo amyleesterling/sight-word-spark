@@ -1,0 +1,24 @@
+{
+  "name": "Sight Word Spark",
+  "short_name": "Word Spark",
+  "description": "Hatch and collect creatures by reading sight words.",
+  "start_url": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#141234",
+  "theme_color": "#141234",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
