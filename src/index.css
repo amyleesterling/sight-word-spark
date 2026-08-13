@@ -15,6 +15,24 @@ body {
     radial-gradient(circle at 75% 20%, rgba(99, 197, 255, 0.12), transparent 35%);
   background-attachment: fixed;
   -webkit-tap-highlight-color: transparent;
+  /* respect notches and home indicators on phones */
+  padding-top: env(safe-area-inset-top);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  /* keep rapid game taps from double-tap zooming or selecting text */
+  touch-action: manipulation;
+}
+
+button {
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* iOS rubber-band overscroll looks broken behind a fixed gradient */
+html {
+  overscroll-behavior-y: none;
 }
 
 /* Big friendly focus rings for keyboard players */

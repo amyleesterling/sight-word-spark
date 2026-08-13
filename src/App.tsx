@@ -9,6 +9,7 @@ import { PlayScreen } from "./screens/PlayScreen";
 import { HatchScreen } from "./screens/HatchScreen";
 import { GalleryScreen } from "./screens/GalleryScreen";
 import { CustomWordsScreen } from "./screens/CustomWordsScreen";
+import { GrownUpsScreen } from "./screens/GrownUpsScreen";
 
 /** levelId null means "my words" (the custom list). */
 type Screen =
@@ -17,7 +18,8 @@ type Screen =
   | { kind: "play"; levelId: number | null; creature: CreatureSpec }
   | { kind: "hatch"; levelId: number | null; creature: CreatureSpec; wasNew: boolean }
   | { kind: "gallery" }
-  | { kind: "custom" };
+  | { kind: "custom" }
+  | { kind: "grownups" };
 
 function levelPool(levelId: number | null, customWords: string[]): WordEntry[] {
   if (levelId === null) return customWords.map((word) => ({ word }));
@@ -62,6 +64,7 @@ export function App() {
           onPickLevel={startPreTrail}
           onGallery={() => setScreen({ kind: "gallery" })}
           onCustomWords={() => setScreen({ kind: "custom" })}
+          onGrownUps={() => setScreen({ kind: "grownups" })}
         />
       );
     case "pretrail":
@@ -113,5 +116,7 @@ export function App() {
           onPlay={() => startPreTrail(null)}
         />
       );
+    case "grownups":
+      return <GrownUpsScreen onBack={goHome} />;
   }
 }

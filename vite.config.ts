@@ -6,6 +6,9 @@ import { devTtsPlugin } from "./server/dev-tts-plugin";
 // The devTtsPlugin mirrors that function locally so `npm run dev` has working audio
 // when OPENAI_API_KEY is set in the shell environment.
 export default defineConfig({
+  // Relative base so the same build works at a domain root (Cloudflare Pages)
+  // or under a subpath (GitHub Pages project site).
+  base: "./",
   plugins: [react(), devTtsPlugin()],
   build: {
     outDir: "dist",

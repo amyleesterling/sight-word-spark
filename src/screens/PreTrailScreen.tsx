@@ -30,7 +30,7 @@ export function PreTrailScreen({ creature, collection, wordCount, onStart, onBac
             total={wordCount}
             shell={creature.egg.shell}
             speckle={creature.egg.speckle}
-            className="w-44 h-52 sm:w-52 sm:h-60"
+            className="h-[clamp(160px,30vh,240px)] aspect-[6/7]"
           />
         </div>
         <h1 className="mt-4 text-3xl font-extrabold">A mystery friend is inside!</h1>

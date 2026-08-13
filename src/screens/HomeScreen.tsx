@@ -9,9 +9,10 @@ interface Props {
   onPickLevel: (levelId: number | null) => void;
   onGallery: () => void;
   onCustomWords: () => void;
+  onGrownUps: () => void;
 }
 
-export function HomeScreen({ save, onPickLevel, onGallery, onCustomWords }: Props) {
+export function HomeScreen({ save, onPickLevel, onGallery, onCustomWords, onGrownUps }: Props) {
   const progress = collectionProgress(save.collection);
 
   return (
@@ -90,6 +91,13 @@ export function HomeScreen({ save, onPickLevel, onGallery, onCustomWords }: Prop
       </div>
 
       <VoiceDisclosure />
+      <button
+        type="button"
+        onClick={onGrownUps}
+        className="mx-auto mt-1 text-xs text-white/40 underline underline-offset-2 min-h-[44px] px-4"
+      >
+        Grown-ups: voice settings
+      </button>
     </Shell>
   );
 }

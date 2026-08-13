@@ -10,11 +10,49 @@
 // - On failure it reports a calm, retryable error state. There is deliberately
 //   no window.speechSynthesis fallback.
 
-import { ttsCacheKey } from "../../shared/tts";
+import { buildOpenAiSpeechRequest, isValidWord, ttsCacheKey } from "../../shared/tts";
 
 export type AudioState = "idle" | "loading" | "playing" | "error";
 
 const CACHE_NAME = "sight-word-spark-tts";
+
+// On static hosting (no /api/tts server), a grown-up can paste their own
+// OpenAI key on the Grown-Ups screen. It is stored ONLY in this device's
+// localStorage and sent ONLY to api.openai.com — never to any other server,
+// never bundled in code, never synced anywhere.
+const PARENT_KEY_STORAGE = "sight-word-spark:parent-voice-key";
+
+export function getParentVoiceKey(): string | null {
+  try {
+    return localStorage.getItem(PARENT_KEY_STORAGE);
+  } catch {
+    return null;
+  }
+}
+
+export function setParentVoiceKey(key: string | null): void {
+  try {
+    if (key) localStorage.setItem(PARENT_KEY_STORAGE, key);
+    else localStorage.removeItem(PARENT_KEY_STORAGE);
+  } catch {
+    // storage unavailable — the key just won't persist
+  }
+}
+
+/** Fetch audio straight from OpenAI with the device-local parent key. */
+async function fetchDirectFromOpenAi(word: string, key: string): Promise<Blob> {
+  if (!isValidWord(word)) throw new Error("invalid word");
+  const res = await fetch("https://api.openai.com/v1/audio/speech", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${key}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(buildOpenAiSpeechRequest(word)),
+  });
+  if (!res.ok) throw new Error(`openai ${res.status}`);
+  return res.blob();
+}
 
 // A tiny silent wav used to unlock the audio element inside a user gesture.
 const SILENT_WAV =
@@ -100,15 +138,22 @@ export class WordAudio {
         }
       }
 
-      // 2. Network.
+      // 2. Network: the app's own endpoint first (key stays on the server);
+      //    on static hosting fall back to the device-local parent key.
       if (!blob) {
-        const res = await fetch("/api/tts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ word }),
-        });
-        if (!res.ok) throw new Error(`tts ${res.status}`);
-        blob = await res.blob();
+        try {
+          const res = await fetch("api/tts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ word }),
+          });
+          if (!res.ok) throw new Error(`tts ${res.status}`);
+          blob = await res.blob();
+        } catch (err) {
+          const parentKey = getParentVoiceKey();
+          if (!parentKey) throw err;
+          blob = await fetchDirectFromOpenAi(word, parentKey);
+        }
         if (typeof caches !== "undefined") {
           try {
             const cache = await caches.open(CACHE_NAME);

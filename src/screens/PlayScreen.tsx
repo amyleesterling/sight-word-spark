@@ -154,7 +154,7 @@ export function PlayScreen({
             shell={creature.egg.shell}
             speckle={creature.egg.speckle}
             justCracked={justCracked && !reducedMotion}
-            className="w-32 h-40 sm:w-36 sm:h-44"
+            className="h-[clamp(104px,22vh,176px)] aspect-[6/7]"
           />
         </div>
 
