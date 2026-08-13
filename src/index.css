@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  @apply bg-night-900 text-white font-round antialiased;
+  background-image:
+    radial-gradient(circle at 20% 15%, rgba(143, 138, 255, 0.18), transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(255, 190, 46, 0.10), transparent 45%),
+    radial-gradient(circle at 75% 20%, rgba(99, 197, 255, 0.12), transparent 35%);
+  background-attachment: fixed;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Big friendly focus rings for keyboard players */
+:focus-visible {
+  outline: 3px solid #ffd15c;
+  outline-offset: 3px;
+  border-radius: 0.75rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
