@@ -14,7 +14,7 @@ Sight Word Spark is a short listen-and-find game for growing readers. A child se
 - Server-side OpenAI Speech API using the pinned `gpt-4o-mini-tts-2025-12-15` snapshot and `marin`
 - Explicit pronunciation metadata for ambiguous words such as `read` and `live`
 - Aggressive edge/browser caching for standard Dolch recordings and next-word preloading
-- Calm retry behavior with no browser-generated voice fallback
+- Temporary, clearly disclosed device-voice fallback when GPT audio is unavailable
 - Touch, keyboard, responsive-layout, and reduced-motion support
 
 ## Local setup
@@ -50,7 +50,7 @@ npm run lint
 npm test
 ```
 
-The test suite verifies the production worker, calm missing-key behavior, all 179 included Dolch words, ambiguous pronunciation metadata, and removal of browser speech synthesis.
+The test suite verifies the production worker, missing-key behavior, all 179 included Dolch words, ambiguous pronunciation metadata, and the disclosed temporary device-voice fallback.
 
 ## Deployment
 

@@ -104,10 +104,11 @@ export default function Home() {
   const [answered, setAnswered] = useState(false);
   const [wrongChoice, setWrongChoice] = useState<string | null>(null);
   const [message, setMessage] = useState("Listen, then find the word!");
-  const [audioState, setAudioState] = useState<"idle" | "loading" | "ready" | "error">("idle");
+  const [audioState, setAudioState] = useState<"idle" | "loading" | "ready" | "fallback" | "error">("idle");
   const [collection, setCollection] = useState<CollectionState>({ version: 2, discovered: [], hatchCount: 0 });
   const [prizeId, setPrizeId] = useState(CREATURES[0].id as string);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioObjectUrlRef = useRef<string | null>(null);
   const roundsRef = useRef<Round[]>([]);
   const advanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const selectedWords = customWords.length >= 3 ? customWords : LEVELS[level].words;
@@ -127,6 +128,8 @@ export default function Home() {
       window.clearTimeout(hydrationTimer);
       audioRef.current?.pause();
       if (audioRef.current) audioRef.current.src = "";
+      window.speechSynthesis?.cancel();
+      if (audioObjectUrlRef.current) URL.revokeObjectURL(audioObjectUrlRef.current);
     };
   }, []);
 
@@ -141,20 +144,49 @@ export default function Home() {
     fetch(audioUrl(round), { cache: "force-cache" }).catch(() => undefined);
   }, [audioUrl]);
 
+  const speakWithDeviceVoice = useCallback((word: string) => {
+    if (!("speechSynthesis" in window)) {
+      setAudioState("error");
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(word);
+    const voices = window.speechSynthesis.getVoices();
+    utterance.voice = voices.find((voice) => /Samantha|Ava|Google US English/i.test(voice.name))
+      || voices.find((voice) => voice.lang.toLowerCase().startsWith("en-us"))
+      || voices.find((voice) => voice.lang.toLowerCase().startsWith("en"))
+      || null;
+    utterance.rate = 0.82;
+    utterance.pitch = 1;
+    utterance.volume = 1;
+    utterance.onerror = () => setAudioState("error");
+    window.speechSynthesis.speak(utterance);
+    setAudioState("fallback");
+  }, []);
+
   const speak = useCallback(async (round?: Round) => {
     if (!round || !audioRef.current) return;
     const audio = audioRef.current;
+    window.speechSynthesis?.cancel();
     audio.pause();
     audio.currentTime = 0;
-    audio.src = audioUrl(round);
+    if (audioObjectUrlRef.current) {
+      URL.revokeObjectURL(audioObjectUrlRef.current);
+      audioObjectUrlRef.current = null;
+    }
     setAudioState("loading");
     try {
+      const response = await fetch(audioUrl(round), { cache: "force-cache" });
+      if (!response.ok) throw new Error("GPT voice unavailable");
+      const objectUrl = URL.createObjectURL(await response.blob());
+      audioObjectUrlRef.current = objectUrl;
+      audio.src = objectUrl;
       await audio.play();
       setAudioState("ready");
     } catch {
-      setAudioState("error");
+      speakWithDeviceVoice(round.target);
     }
-  }, [audioUrl]);
+  }, [audioUrl, speakWithDeviceVoice]);
 
   const selectNextPrize = useCallback((state: CollectionState) => {
     const available = CREATURES.filter((creature) => !state.discovered.includes(creature.id));
@@ -249,7 +281,7 @@ export default function Home() {
             </div>
           </div>
           <button className="start-button" onClick={startGame}><span>Start hatching</span><span className="start-star" aria-hidden="true">→</span></button>
-          <p className="source-note">AI-generated reading voice • No sign-in • Collection stays on this device</p>
+          <p className="source-note">Temporary device voice until GPT voice is connected • No sign-in • Collection stays on this device</p>
         </section>
       )}
 
@@ -257,10 +289,10 @@ export default function Home() {
         <section className="play-area">
           <div className="round-meta"><button className="back-button" onClick={() => { audioRef.current?.pause(); setStage("welcome"); }}>‹ Change words</button><span>Find {roundIndex + 1} of {ROUND_COUNT}</span></div>
           <div className="progress-track" role="progressbar" aria-valuemin={0} aria-valuemax={6} aria-valuenow={correct}><span style={{ width: `${progress}%` }} /></div>
-          <div className="hatch-board"><div className={`egg crack-${crackLevel}`}><div className="crack-lines" aria-hidden="true">⌁</div><Creature id={prizeId} hidden /></div><div className="hatch-copy"><span className="mission-label">MYSTERY EGG</span><h2>{correct === 0 ? "Ready for the first crack" : `${correct} of 6 cracks glowing`}</h2><p role="status" aria-live="polite">{message}</p><button className="listen-button" onClick={() => void speak(current)} disabled={audioState === "loading"}><span aria-hidden="true">▶</span> {audioState === "loading" ? "Getting the voice…" : audioState === "error" ? "Retry the voice" : "Hear the word"}</button>{audioState === "error" && <small>Nothing is wrong with your answer. The voice just needs another try.</small>}</div></div>
+          <div className="hatch-board"><div className={`egg crack-${crackLevel}`}><div className="crack-lines" aria-hidden="true">⌁</div><Creature id={prizeId} hidden /></div><div className="hatch-copy"><span className="mission-label">MYSTERY EGG</span><h2>{correct === 0 ? "Ready for the first crack" : `${correct} of 6 cracks glowing`}</h2><p role="status" aria-live="polite">{message}</p><button className="listen-button" onClick={() => void speak(current)} disabled={audioState === "loading"}><span aria-hidden="true">▶</span> {audioState === "loading" ? "Getting the voice…" : audioState === "error" ? "Retry the voice" : "Hear the word"}</button>{audioState === "fallback" && <small>Using a temporary device voice for tonight’s test.</small>}{audioState === "error" && <small>Nothing is wrong with your answer. The voice just needs another try.</small>}</div></div>
           <div className="choices" aria-label="Word choices">{current.choices.map((word, index) => { const isRight = answered && word === current.target; const isWrong = wrongChoice === word; return <button key={word} className={`word-card ${COLORS[index]} ${isRight ? "right" : ""} ${isWrong ? "wrong" : ""}`} onClick={() => chooseWord(word)} disabled={answered || isWrong}><span>{word}</span><small>{isRight ? "Found" : isWrong ? "Try another" : `Choice ${index + 1}`}</small></button>; })}</div>
           <div className="crack-trail" aria-label={`${correct} of 6 finds complete`}>{Array.from({ length: ROUND_COUNT }, (_, index) => <span key={index} className={index < correct ? "lit" : ""}>{index < correct ? "✦" : "◇"}</span>)}</div>
-          <p className="voice-note">Voice is AI-generated.</p>
+          <p className="voice-note">{audioState === "ready" ? "Voice is AI-generated." : "Temporary voice is generated by this device."}</p>
         </section>
       )}
 
