@@ -11,11 +11,20 @@ test("all 179 included Dolch words are covered by the speech endpoint", () => {
   assert.equal(words.length, 179);
   assert.equal(new Set(words).size, 179);
   const serverList = worker.match(/const DOLCH_WORDS = new Set\(`([^`]+)`\.split/)?.[1]?.split(" ") || [];
-  assert.deepEqual(new Set(serverList), new Set(words));
+  for (const word of words) assert.ok(serverList.includes(word), `${word} must be cached as a standard word`);
+});
+
+test("the complete supplied Fry list contains 200 distinct words and is cached", () => {
+  const fry = page.match(/const FRY_200_WORDS = `([^`]+)`\.split/)?.[1]?.split(" ") || [];
+  const serverFry = worker.match(/const FRY_200_WORDS = `([^`]+)`\.split/)?.[1]?.split(" ") || [];
+  assert.equal(fry.length, 200);
+  assert.equal(new Set(fry.map((word) => word.toLowerCase())).size, 200);
+  assert.deepEqual(new Set(serverFry), new Set(fry.map((word) => word.toLowerCase())));
+  assert.match(page, /slice\(0, 200\)/, "custom lists must accept the complete supplied list");
 });
 
 test("ambiguous words have matching explicit pronunciation metadata", () => {
-  for (const word of ["live", "read"]) {
+  for (const word of ["a", "i", "does", "live", "read", "use", "america"]) {
     const pageValue = page.match(new RegExp(`${word}: \\\"([^\\\"]+)\\\"`))?.[1];
     const workerValue = worker.match(new RegExp(`${word}: \\\"([^\\\"]+)\\\"`))?.[1];
     assert.ok(pageValue, `${word} needs client pronunciation metadata`);

@@ -2,21 +2,29 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-type LevelKey = "pre-k" | "kindergarten" | "first" | "second";
+type LevelKey = "pre-k" | "kindergarten" | "first" | "second" | "all";
 type Stage = "welcome" | "playing" | "complete" | "collection";
 type Round = { target: string; spoken: string; choices: string[] };
 type CollectionState = { version: 2; discovered: string[]; hatchCount: number };
+
+const FRY_200_WORDS = `the of and a to in is you that it he was for on are as with his they I at be this have from or one had by words but not what all were we when your can said there use an each which she do how their if will up other about out many then them these so some her would make like him into time has look two more write go see number no way could people my than first water been called who oil sit now find long down day did get come made may part over new sound take only little work know place years live me back give most very after things our just name good sentence man think say great where help through much before line right too means old any same tell boy follow came want show also around form three small set put end does another well large must big even such because turn here why ask went men read need land different home us move try kind hand picture again change off play spell air away animal house point page letter mother answer found study still learn should America world`.split(" ");
 
 const LEVELS: Record<LevelKey, { label: string; note: string; words: string[] }> = {
   "pre-k": { label: "Pre-K", note: "40 first words", words: ["a", "and", "away", "big", "blue", "can", "come", "down", "find", "for", "funny", "go", "help", "here", "I", "in", "is", "it", "jump", "little", "look", "make", "me", "my", "not", "one", "play", "red", "run", "said", "see", "the", "three", "to", "two", "up", "we", "where", "yellow", "you"] },
   kindergarten: { label: "Kindergarten", note: "52 growing words", words: ["all", "am", "are", "at", "ate", "be", "black", "brown", "but", "came", "did", "do", "eat", "four", "get", "good", "have", "he", "into", "like", "must", "new", "no", "now", "on", "our", "out", "please", "pretty", "ran", "ride", "saw", "say", "she", "so", "soon", "that", "there", "they", "this", "too", "under", "want", "was", "well", "went", "what", "white", "who", "will", "with", "yes"] },
   first: { label: "1st Grade", note: "41 bright words", words: ["after", "again", "an", "any", "as", "ask", "by", "could", "every", "fly", "from", "give", "going", "had", "has", "her", "him", "his", "how", "just", "know", "let", "live", "may", "of", "old", "once", "open", "over", "put", "round", "some", "stop", "take", "thank", "them", "then", "think", "walk", "were", "when"] },
   second: { label: "2nd Grade", note: "46 mighty words", words: ["always", "around", "because", "been", "before", "best", "both", "buy", "call", "cold", "does", "don't", "fast", "first", "five", "found", "gave", "goes", "green", "its", "made", "many", "off", "or", "pull", "read", "right", "sing", "sit", "sleep", "tell", "their", "these", "those", "upon", "us", "use", "very", "wash", "which", "why", "wish", "work", "would", "write", "your"] },
+  all: { label: "All 200 Words", note: "Complete Fry list", words: FRY_200_WORDS },
 };
 
 const PRONUNCIATIONS: Record<string, string> = {
+  a: "a, as in: a cat",
+  i: "I",
+  does: "does, as in: she does it",
   live: "live, as in: I live on this planet",
   read: "read, present tense, as in: I read a book",
+  use: "use, as in: I use a pencil",
+  america: "America",
 };
 
 const CREATURES = [
@@ -50,7 +58,7 @@ function shuffle<T>(values: T[]): T[] {
 function validateCustomWords(input: string) {
   const raw = input.split(/[\n,]+/).map((word) => word.trim()).filter(Boolean);
   const invalid = raw.find((word) => word.length > 24 || !/^\p{L}+(?:['’-]\p{L}+)?$/u.test(word));
-  const words = [...new Set(raw.map((word) => word.toLocaleLowerCase()))].slice(0, 24);
+  const words = [...new Set(raw.map((word) => word.toLocaleLowerCase()))].slice(0, 200);
   return { words, invalid };
 }
 
@@ -275,9 +283,9 @@ export default function Home() {
           </div>
           <div className="setup-card">
             <div className="setup-content"><h2>Choose a word trail</h2><p>Each trail focuses on just five words at a time.</p>
-              <div className="level-grid">{(Object.keys(LEVELS) as LevelKey[]).map((key) => <button key={key} onClick={() => { setLevel(key); setCustomWords([]); }} className={`level-button ${level === key && !customWords.length ? "selected" : ""}`} aria-pressed={level === key && !customWords.length}><span>{LEVELS[key].label}</span><small>{LEVELS[key].note}</small></button>)}</div>
+              <div className="level-grid">{(Object.keys(LEVELS) as LevelKey[]).map((key) => <button key={key} onClick={() => { setLevel(key); setCustomWords([]); }} className={`level-button ${key === "all" ? "all-level" : ""} ${level === key && !customWords.length ? "selected" : ""}`} aria-pressed={level === key && !customWords.length}><span>{LEVELS[key].label}</span><small>{LEVELS[key].note}</small></button>)}</div>
               <button className={`custom-button ${customWords.length ? "active" : ""}`} onClick={() => setCustomOpen((value) => !value)}><span aria-hidden="true">✎</span><span>{customWords.length ? `${customWords.length} custom words ready` : "Add my own words"}</span><span aria-hidden="true">{customOpen ? "−" : "+"}</span></button>
-              {customOpen && <div className="custom-panel"><label htmlFor="custom-words">Words separated by commas or new lines</label><textarea id="custom-words" value={customText} maxLength={600} onChange={(event) => { setCustomText(event.target.value); setCustomError(""); }} placeholder="because, friend, together" /><div className="custom-actions"><span>{customCount}/24 words</span><button onClick={saveCustom}>Use these words</button></div>{customError && <p className="custom-error" role="alert">{customError}</p>}</div>}
+              {customOpen && <div className="custom-panel"><label htmlFor="custom-words">Words separated by commas or new lines</label><textarea id="custom-words" value={customText} maxLength={5000} onChange={(event) => { setCustomText(event.target.value); setCustomError(""); }} placeholder="because, friend, together" /><div className="custom-actions"><span>{customCount}/200 words</span><button onClick={saveCustom}>Use these words</button></div>{customError && <p className="custom-error" role="alert">{customError}</p>}</div>}
             </div>
           </div>
           <button className="start-button" onClick={startGame}><span>Start hatching</span><span className="start-star" aria-hidden="true">→</span></button>
