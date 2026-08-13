@@ -28,10 +28,10 @@ const PRONUNCIATIONS: Record<string, string> = {
 };
 
 const CREATURES = [
-  { id: "nova", name: "Nova Nibbler", icon: "✦", color: "violet", trait: "collects loose starlight" },
-  { id: "moss", name: "Mosskip", icon: "❋", color: "fern", trait: "grows tiny forests" },
-  { id: "zip", name: "Zipzap", icon: "ϟ", color: "gold", trait: "outruns comets" },
-  { id: "luma", name: "Luma Loop", icon: "∞", color: "coral", trait: "draws light in the air" },
+  { id: "nova", name: "Nova Nibbler", icon: "✦", color: "violet", trait: "hatches tiny gardens beneath its wings", art: "creatures/nova-nibbler.jpg" },
+  { id: "moss", name: "Stelluna", icon: "❋", color: "fern", trait: "carries a midnight sky on its shell", art: "creatures/stelluna.jpg" },
+  { id: "zip", name: "Bubblebloom", icon: "ϟ", color: "gold", trait: "makes underwater flowers sparkle", art: "creatures/bubblebloom.jpg" },
+  { id: "luma", name: "Sunfeather", icon: "∞", color: "coral", trait: "rides warm winds between the stars", art: "creatures/sunfeather.jpg" },
   { id: "orbit", name: "Orbit Otter", icon: "●", color: "aqua", trait: "surfs around moons" },
   { id: "pixel", name: "Pixel Puff", icon: "◆", color: "blue", trait: "builds worlds from blocks" },
   { id: "ember", name: "Emberwing", icon: "▲", color: "coral", trait: "warms cold constellations" },
@@ -89,6 +89,18 @@ function readCollection(): CollectionState {
 
 function Creature({ id, hidden = false, large = false }: { id: string; hidden?: boolean; large?: boolean }) {
   const creature = CREATURES.find((item) => item.id === id) || CREATURES[0];
+  const art = "art" in creature ? creature.art : undefined;
+
+  if (!hidden && art) {
+    return (
+      <div className={`creature-art ${large ? "large" : ""}`} role="img" aria-label={creature.name}>
+        {/* Bundled collectible art stays portable across Sites and GitHub Pages. */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={art} alt="" />
+      </div>
+    );
+  }
+
   return (
     <div className={`creature ${creature.color} ${hidden ? "hidden" : ""} ${large ? "large" : ""}`} aria-hidden="true">
       <span className="ear left" /><span className="ear right" />

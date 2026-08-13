@@ -10,7 +10,7 @@ Sight Word Spark is a short listen-and-find game for growing readers. A child se
 - The complete supplied 200-word Fry list in one selectable trail
 - Safe custom word lists up to 200 words with client and server validation
 - Five-word session focus with missed words returning later without penalties
-- Twelve-creature collection with silhouettes and no duplicates until the initial set is complete
+- Twelve-creature collection with four original illustrated hatchlings, mystery silhouettes, and no duplicates until the initial set is complete
 - Versioned `localStorage` for collections and words to revisit
 - Server-side OpenAI Speech API using the pinned `gpt-4o-mini-tts-2025-12-15` snapshot and `marin`
 - Explicit pronunciation metadata for ambiguous words such as `read` and `live`
